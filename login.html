@@ -1,0 +1,200 @@
+<!DOCTYPE html><html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login Admin | E-Voting Universal</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg,#07152e,#102e5c,#1763a5);
+    padding: 20px;
+}
+
+.login-box {
+    width: 100%;
+    max-width: 420px;
+    background: white;
+    padding: 35px;
+    border-radius: 22px;
+    box-shadow: 0 20px 60px #0005;
+}
+
+.logo {
+    text-align: center;
+    font-size: 45px;
+    margin-bottom: 15px;
+}
+
+h2 {
+    text-align: center;
+    color: #102e5c;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #777;
+    font-size: 13px;
+    margin-bottom: 30px;
+}
+
+label {
+    display: block;
+    font-size: 13px;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+input {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    margin-bottom: 18px;
+    outline: none;
+}
+
+input:focus {
+    border-color: #1763a5;
+}
+
+button {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    background: #123d78;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:disabled {
+    opacity: .6;
+    cursor: wait;
+}
+
+#message {
+    text-align: center;
+    font-size: 13px;
+    margin-top: 15px;
+    line-height: 1.5;
+}
+
+.footer {
+    text-align: center;
+    color: #999;
+    font-size: 11px;
+    margin-top: 25px;
+}
+</style></head><body><div class="login-box"><div class="logo">🗳️</div><h2>E-VOTING UNIVERSAL</h2><p class="subtitle">
+Secure Multi Admin Voting System
+</p><form id="loginForm"><label>Email Admin</label>
+<input
+type="email"
+id="email"
+placeholder="Masukkan email"
+required>
+
+<label>Password</label>
+<input
+type="password"
+id="password"
+placeholder="Masukkan password"
+required>
+
+<button id="loginButton" type="submit">
+LOGIN ADMIN
+</button></form><div id="message"></div><div class="footer">
+E-Voting Universal © 2026
+</div></div><script>
+const SUPABASE_URL = "https://kzsmptlprcpuqtgswteg.supabase.co";
+const SUPABASE_KEY = "sb_publishable_nqVX3V6c12rf5ByPC2NFkA_4zFohtkz";
+
+const db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+const form = document.getElementById("loginForm");
+const message = document.getElementById("message");
+const button = document.getElementById("loginButton");
+
+form.addEventListener("submit", async (e) => {
+
+    e.preventDefault();
+
+    button.disabled = true;
+    button.textContent = "MEMERIKSA...";
+    message.textContent = "";
+
+    try {
+
+        const email =
+            document.getElementById("email").value.trim();
+
+        const password =
+            document.getElementById("password").value;
+
+        const { data, error } =
+            await db.auth.signInWithPassword({
+                email,
+                password
+            });
+
+        if (error) throw error;
+
+        if (!data.user.email_confirmed_at) {
+            throw new Error("Email belum diverifikasi.");
+        }
+
+        const { data: profile, error: profileError } =
+            await db
+            .from("profiles")
+            .select("full_name, role")
+            .eq("id", data.user.id)
+            .single();
+
+        if (profileError || !profile) {
+            throw new Error("Profil admin tidak ditemukan.");
+        }
+
+        if (
+            profile.role !== "superadmin" &&
+            profile.role !== "admin"
+        ) {
+            throw new Error("Akun tidak memiliki hak akses.");
+        }
+
+        if (profile.role === "superadmin") {
+            window.location.href = "superadmin.html";
+        } else {
+            window.location.href = "admin.html";
+        }
+
+    } catch (error) {
+
+        message.style.color = "red";
+        message.textContent = error.message;
+
+        await db.auth.signOut();
+
+    } finally {
+
+        button.disabled = false;
+        button.textContent = "LOGIN ADMIN";
+
+    }
+
+});
+</script></body>
+  </html>
